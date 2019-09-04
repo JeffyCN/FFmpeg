@@ -93,6 +93,9 @@ static int rkmpp_write_data(AVCodecContext *avctx, uint8_t *buffer, int size, in
     int ret;
     MppPacket packet;
 
+    if (!pts || pts == AV_NOPTS_VALUE)
+        pts = avctx->reordered_opaque;
+
     // create the MPP packet
     ret = mpp_packet_init(&packet, buffer, size);
     if (ret != MPP_OK) {
@@ -398,6 +401,12 @@ static int rkmpp_retrieve_frame(AVCodecContext *avctx, AVFrame *frame)
         frame->width            = mpp_frame_get_width(mppframe);
         frame->height           = mpp_frame_get_height(mppframe);
         frame->pts              = mpp_frame_get_pts(mppframe);
+#if FF_API_PKT_PTS
+        FF_DISABLE_DEPRECATION_WARNINGS
+        frame->pkt_pts          = frame->pts;
+        FF_ENABLE_DEPRECATION_WARNINGS
+#endif
+        frame->reordered_opaque = frame->pts;
         frame->color_range      = mpp_frame_get_color_range(mppframe);
         frame->color_primaries  = mpp_frame_get_color_primaries(mppframe);
         frame->color_trc        = mpp_frame_get_color_trc(mppframe);
