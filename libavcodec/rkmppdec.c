@@ -544,6 +544,7 @@ static void rkmpp_flush(AVCodecContext *avctx)
     ret = decoder->mpi->reset(decoder->ctx);
     if (ret == MPP_OK) {
         decoder->first_packet = 1;
+        decoder->eos_reached = 0;
     } else
         av_log(avctx, AV_LOG_ERROR, "Failed to reset MPI (code = %d)\n", ret);
 }
