@@ -46,7 +46,9 @@
 #include "libavutil/spherical.h"
 #include "libavutil/stereo3d.h"
 #include "libavutil/timecode.h"
+#ifdef CONFIG_AC3_DEMUXER
 #include "libavcodec/ac3tab.h"
+#endif
 #include "libavcodec/flac.h"
 #include "libavcodec/mpegaudiodecheader.h"
 #include "avformat.h"
@@ -779,6 +781,7 @@ static int mov_read_esds(MOVContext *c, AVIOContext *pb, MOVAtom atom)
     return ff_mov_read_esds(c->fc, pb);
 }
 
+#ifdef CONFIG_AC3_DEMUXER
 static int mov_read_dac3(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 {
     AVStream *st;
@@ -814,7 +817,9 @@ static int mov_read_dac3(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 
     return 0;
 }
+#endif
 
+#ifdef CONFIG_EAC3_DEMUXER
 static int mov_read_dec3(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 {
     AVStream *st;
@@ -854,7 +859,9 @@ static int mov_read_dec3(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 
     return 0;
 }
+#endif
 
+#ifdef CONFIG_DTS_DEMUXER
 static int mov_read_ddts(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 {
     const uint32_t ddts_size = 20;
@@ -916,6 +923,7 @@ static int mov_read_ddts(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 
     return 0;
 }
+#endif
 
 static int mov_read_chan(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 {
@@ -2422,8 +2430,12 @@ static int mov_finalize_stsd_codec(MOVContext *c, AVIOContext *pb,
             st->codecpar->sample_rate = AV_RB32(st->codecpar->extradata + 32);
         }
         break;
+#ifdef CONFIG_AC3_DEMUXER
     case AV_CODEC_ID_AC3:
+#endif
+#ifdef CONFIG_EAC3_DEMUXER
     case AV_CODEC_ID_EAC3:
+#endif
     case AV_CODEC_ID_MPEG1VIDEO:
     case AV_CODEC_ID_VC1:
     case AV_CODEC_ID_VP8:
@@ -6770,9 +6782,15 @@ static const MOVParseTableEntry mov_default_parse_table[] = {
 { MKTAG('u','d','t','a'), mov_read_default },
 { MKTAG('w','a','v','e'), mov_read_wave },
 { MKTAG('e','s','d','s'), mov_read_esds },
+#ifdef CONFIG_AC3_DEMUXER
 { MKTAG('d','a','c','3'), mov_read_dac3 }, /* AC-3 info */
+#endif
+#ifdef CONFIG_EAC3_DEMUXER
 { MKTAG('d','e','c','3'), mov_read_dec3 }, /* EAC-3 info */
+#endif
+#ifdef CONFIG_DTS_DEMUXER
 { MKTAG('d','d','t','s'), mov_read_ddts }, /* DTS audio descriptor */
+#endif
 { MKTAG('w','i','d','e'), mov_read_wide }, /* place holder */
 { MKTAG('w','f','e','x'), mov_read_wfex },
 { MKTAG('c','m','o','v'), mov_read_cmov },
