@@ -34,7 +34,6 @@ OBJS-$(CONFIG_RIFFENC)                   += riffenc.o
 OBJS-$(CONFIG_RTPDEC)                    += rdt.o                       \
                                             rtp.o                       \
                                             rtpdec.o                    \
-                                            rtpdec_ac3.o                \
                                             rtpdec_amr.o                \
                                             rtpdec_asf.o                \
                                             rtpdec_dv.o                 \
@@ -60,6 +59,7 @@ OBJS-$(CONFIG_RTPDEC)                    += rdt.o                       \
                                             rtpdec_vp8.o                \
                                             rtpdec_vp9.o                \
                                             rtpdec_xiph.o
+OBJS-$(CONFIG_AC3_DECODER)               += rtpdec_ac3.o
 OBJS-$(CONFIG_RTPENC_CHAIN)              += rtpenc_chain.o rtp.o
 OBJS-$(CONFIG_SHARED)                    += log2_tab.o golomb_tab.o
 OBJS-$(CONFIG_SRTP)                      += srtp.o

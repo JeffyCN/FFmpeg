@@ -1,8 +1,7 @@
 NAME = avcodec
 DESC = FFmpeg codec library
 
-HEADERS = ac3_parser.h                                                  \
-          adts_parser.h                                                 \
+HEADERS = adts_parser.h                                                 \
           avcodec.h                                                     \
           avdct.h                                                       \
           avfft.h                                                       \
@@ -20,8 +19,7 @@ HEADERS = ac3_parser.h                                                  \
           vorbis_parser.h                                               \
           xvmc.h                                                        \
 
-OBJS = ac3_parser.o                                                     \
-       adts_parser.o                                                    \
+OBJS = adts_parser.o                                                    \
        allcodecs.o                                                      \
        avdct.o                                                          \
        avpacket.o                                                       \
@@ -169,6 +167,8 @@ OBJS-$(CONFIG_AAC_ENCODER)             += aacenc.o aaccoder.o aacenctab.o    \
                                           psymodel.o mpeg4audio.o kbdwin.o cbrt_data.o
 OBJS-$(CONFIG_AASC_DECODER)            += aasc.o msrledec.o
 OBJS-$(CONFIG_AC3_DECODER)             += ac3dec_float.o ac3dec_data.o ac3.o kbdwin.o ac3tab.o
+HEADERS-$(CONFIG_AC3_PARSER)           += ac3_parser.h
+OBJS-$(CONFIG_AC3_PARSER)              += ac3_parser.o
 OBJS-$(CONFIG_AC3_FIXED_DECODER)       += ac3dec_fixed.o ac3dec_data.o ac3.o kbdwin.o ac3tab.o
 OBJS-$(CONFIG_AC3_ENCODER)             += ac3enc_float.o ac3enc.o ac3tab.o \
                                           ac3.o kbdwin.o
@@ -908,7 +908,6 @@ OBJS-$(CONFIG_VP8_QSV_HWACCEL)            += qsvdec_other.o
 OBJS-$(CONFIG_ISO_MEDIA)               += mpeg4audio.o mpegaudiodata.o
 
 OBJS-$(CONFIG_ADTS_MUXER)              += mpeg4audio.o
-OBJS-$(CONFIG_CAF_DEMUXER)             += ac3tab.o
 OBJS-$(CONFIG_CODEC2_DEMUXER)          += codec2utils.o
 OBJS-$(CONFIG_CODEC2_MUXER)            += codec2utils.o
 OBJS-$(CONFIG_CODEC2RAW_DEMUXER)       += codec2utils.o
@@ -918,7 +917,6 @@ OBJS-$(CONFIG_FLV_DEMUXER)             += mpeg4audio.o
 OBJS-$(CONFIG_LATM_MUXER)              += mpeg4audio.o
 OBJS-$(CONFIG_MATROSKA_AUDIO_MUXER)    += mpeg4audio.o
 OBJS-$(CONFIG_MATROSKA_MUXER)          += mpeg4audio.o
-OBJS-$(CONFIG_MOV_DEMUXER)             += ac3tab.o
 OBJS-$(CONFIG_MXF_MUXER)               += dnxhddata.o
 OBJS-$(CONFIG_NUT_MUXER)               += mpegaudiodata.o
 OBJS-$(CONFIG_NUT_DEMUXER)             += mpegaudiodata.o mpeg4audio.o

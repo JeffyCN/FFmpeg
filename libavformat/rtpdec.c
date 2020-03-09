@@ -76,7 +76,9 @@ extern RTPDynamicProtocolHandler ff_rdt_live_audio_handler;
 
 static const RTPDynamicProtocolHandler *rtp_dynamic_protocol_handler_list[] = {
     /* rtp */
+#if CONFIG_AC3_DECODER
     &ff_ac3_dynamic_handler,
+#endif
     &ff_amr_nb_dynamic_handler,
     &ff_amr_wb_dynamic_handler,
     &ff_dv_dynamic_handler,

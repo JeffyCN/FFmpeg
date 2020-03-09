@@ -1,7 +1,6 @@
 libavcodec.so.58 libavcodec58 #MINVER#
 * Build-Depends-Package: libavcodec-dev
  LIBAVCODEC_58@LIBAVCODEC_58 7:4.0
- av_ac3_parse_header@LIBAVCODEC_58 7:4.0
  av_adts_header_parse@LIBAVCODEC_58 7:4.0
  av_bitstream_filter_close@LIBAVCODEC_58 7:4.0
  av_bitstream_filter_filter@LIBAVCODEC_58 7:4.0
