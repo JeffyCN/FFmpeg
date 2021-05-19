@@ -38,7 +38,6 @@
 #include "libavutil/log.h"
 
 #define RECEIVE_FRAME_TIMEOUT   100
-#define FRAMEGROUP_MAX_FRAMES   16
 #define INPUT_MAX_PACKETS       4
 
 typedef struct {
@@ -236,13 +235,6 @@ static int rkmpp_init_decoder(AVCodecContext *avctx)
     ret = decoder->mpi->control(decoder->ctx, MPP_DEC_SET_EXT_BUF_GROUP, decoder->frame_group);
     if (ret) {
         av_log(avctx, AV_LOG_ERROR, "Failed to assign buffer group (code = %d)\n", ret);
-        ret = AVERROR_UNKNOWN;
-        goto fail;
-    }
-
-    ret = mpp_buffer_group_limit_config(decoder->frame_group, 0, FRAMEGROUP_MAX_FRAMES);
-    if (ret) {
-        av_log(avctx, AV_LOG_ERROR, "Failed to set buffer group limit (code = %d)\n", ret);
         ret = AVERROR_UNKNOWN;
         goto fail;
     }
