@@ -37,6 +37,11 @@
 #include "libavutil/imgutils.h"
 #include "libavutil/log.h"
 
+#if CONFIG_LIBRGA
+#include <rga/rga.h>
+#include <rga/RgaApi.h>
+#endif
+
 typedef struct {
     MppCtx ctx;
     MppApi *mpi;
@@ -155,7 +160,7 @@ static int rkmpp_init_decoder(AVCodecContext *avctx)
     MppCodingType codectype = MPP_VIDEO_CodingUnused;
     int ret;
 
-    avctx->pix_fmt = AV_PIX_FMT_DRM_PRIME;
+    avctx->pix_fmt = ff_get_format(avctx, avctx->codec->pix_fmts);
 
     // create a decoder and a ref to it
     decoder = av_mallocz(sizeof(RKMPPDecoder));
@@ -254,6 +259,84 @@ static void rkmpp_release_frame(void *opaque, uint8_t *data)
     av_buffer_unref(&framecontextref);
 
     av_free(desc);
+}
+
+static int rkmpp_convert_frame(AVCodecContext *avctx, AVFrame *frame,
+                               MppFrame mppframe, MppBuffer buffer)
+{
+    char *src = mpp_buffer_get_ptr(buffer);
+    char *dst_y = frame->data[0];
+    char *dst_u = frame->data[1];
+    char *dst_v = frame->data[2];
+    int width = mpp_frame_get_width(mppframe);
+    int height = mpp_frame_get_height(mppframe);
+    int hstride = mpp_frame_get_hor_stride(mppframe);
+    int vstride = mpp_frame_get_ver_stride(mppframe);
+    int y_pitch = frame->linesize[0];
+    int u_pitch = frame->linesize[1];
+    int v_pitch = frame->linesize[2];
+    int i, j;
+
+#if CONFIG_LIBRGA
+    rga_info_t src_info = {0};
+    rga_info_t dst_info = {0};
+    int dst_height = (dst_u - dst_y) / y_pitch;
+
+    static int rga_supported = 1;
+    static int rga_inited = 0;
+
+    if (!rga_supported)
+        goto bail;
+
+    if (!rga_inited) {
+        if (c_RkRgaInit() < 0) {
+            rga_supported = 0;
+            av_log(avctx, AV_LOG_WARNING, "RGA not available\n");
+            goto bail;
+        }
+        rga_inited = 1;
+    }
+
+    if (u_pitch != y_pitch / 2 || v_pitch != y_pitch / 2 ||
+        dst_u != dst_y + y_pitch * dst_height ||
+        dst_v != dst_u + u_pitch * dst_height / 2)
+        goto bail;
+
+    src_info.fd = mpp_buffer_get_fd(buffer);
+    src_info.mmuFlag = 1;
+    rga_set_rect(&src_info.rect, 0, 0, width, height, hstride, vstride,
+                 RK_FORMAT_YCbCr_420_SP);
+
+    dst_info.virAddr = dst_y;
+    dst_info.mmuFlag = 1;
+    rga_set_rect(&dst_info.rect, 0, 0, frame->width, frame->height,
+                 y_pitch, dst_height, RK_FORMAT_YCbCr_420_P);
+
+    if (c_RkRgaBlit(&src_info, &dst_info, NULL) < 0)
+        goto bail;
+
+    return 0;
+
+bail:
+#endif
+    av_log(avctx, AV_LOG_WARNING, "Doing slow software conversion\n");
+
+    for (i = 0; i < frame->height; i++)
+        memcpy(dst_y + i * y_pitch, src + i * hstride, frame->width);
+
+    src += hstride * vstride;
+
+    for (i = 0; i < frame->height / 2; i++) {
+        for (j = 0; j < frame->width; j++) {
+            dst_u[j] = src[2 * j + 0];
+            dst_v[j] = src[2 * j + 1];
+        }
+        dst_u += u_pitch;
+        dst_v += v_pitch;
+        src += hstride;
+    }
+
+    return -1;
 }
 
 static int rkmpp_get_frame(AVCodecContext *avctx, AVFrame *frame, int timeout)
@@ -381,6 +464,11 @@ static int rkmpp_get_frame(AVCodecContext *avctx, AVFrame *frame, int timeout)
     mppformat = mpp_frame_get_fmt(mppframe);
     drmformat = rkmpp_get_frameformat(mppformat);
 
+    if (avctx->pix_fmt != AV_PIX_FMT_DRM_PRIME) {
+        ret = rkmpp_convert_frame(avctx, frame, mppframe, buffer);
+        goto out;
+    }
+
     desc = av_mallocz(sizeof(AVDRMFrameDescriptor));
     if (!desc) {
         ret = AVERROR(ENOMEM);
@@ -434,6 +522,7 @@ static int rkmpp_get_frame(AVCodecContext *avctx, AVFrame *frame, int timeout)
 
     return 0;
 
+out:
 fail:
     if (mppframe)
         mpp_frame_deinit(&mppframe);
@@ -597,6 +686,7 @@ static void rkmpp_flush(AVCodecContext *avctx)
         .capabilities   = AV_CODEC_CAP_DELAY, \
         .caps_internal  = AV_CODEC_CAP_AVOID_PROBING, \
         .pix_fmts       = (const enum AVPixelFormat[]) { AV_PIX_FMT_DRM_PRIME, \
+                                                         AV_PIX_FMT_YUV420P, \
                                                          AV_PIX_FMT_NONE}, \
         .bsfs           = BSFS, \
     };
